@@ -19,7 +19,7 @@ coverage: OPT := -O0 -g --coverage
 
 #-----------------------------------------------------------------------------------
 #Add source files as necessary
-#If the files are not comiled using the genieric rules, add commands under their
+#If the files are not compiled using the generic rules, add commands under their
 #rule declaration. Add these items to FILTER
 #-----------------------------------------------------------------------------------
 SRC := \
@@ -39,7 +39,7 @@ MOD_FILTER := $(FILTER:.f90=.mod)
 
 #-----------------------------------------------------------------------------------
 #Complex external dependencies. Each of these requires a custom build rule.
-#Intended for depenencies with thier own makefiles or other build system
+#Intended for dependencies with their own makefiles or other build system
 #-----------------------------------------------------------------------------------
 COMP_DEP := \
 #Phony targets for cleaning and building

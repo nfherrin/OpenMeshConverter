@@ -27,7 +27,7 @@ The order for the boundary conditions specified in this manner are as follows:
 0 is the integer value for vacuum boundary conditions, 1 is the integer value for reflective boundary conditions, and 2 is the integer value for incident flux boundary conditions.
 i.e. The following use of OpenMeshConverter will convert the Gmsh file and assign reflective boundary conditions to the $-x$, $-y$, and $+y$ boundary faces, and all other boundary conditions will be set to vacuum.
 ```
-  >> <path_to_Mesh_Converter>/Mesh_Converter.exe <gmsh_file> -bc 1 0 1 1 0 0
+  >> <path_to_OpenMeshConverter>/OpenMeshConverter.exe <gmsh_file> -bc 1 0 1 1 0 0
 ```
 It should be noted that if reflective boundary conditions are specified, then the reflective boundaries must all reside on flat boundary surfaces.
 If the user tries to assign reflective boundary conditions to a direction with a non-flat boundary, then the converter utility will throw an error and terminate.

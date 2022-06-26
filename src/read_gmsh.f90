@@ -22,6 +22,7 @@ CONTAINS
 
     READ(20,*)temp_str
     IF(temp_str .NE. '$MeshFormat')STOP 'Not a gmesh file'
+    READ(20,*)temp_str
     temp_str=TRIM(ADJUSTL(temp_str))
     IF(temp_str(1:2) .NE. '4.')STOP 'gmesh format is wrong, should be 4 version'
 
@@ -87,6 +88,8 @@ CONTAINS
     !read in all node data
     num_tets=0
     el_indx=0
+    prog=0
+    WRITE(*,'(A)',ADVANCE='NO')'Progress:'
     DO i=1,num_entities
       READ(20,*)el_dim,ent_tag,temp_int,loc_num_el
       !actually counting the tets
@@ -97,6 +100,10 @@ CONTAINS
           el_indx=el_indx+1
           READ(20,*)temp_int,temp_array(el_indx,1:4)
           temp_array(el_indx,5)=ent_tag
+          IF(MOD(el_indx,CEILING(numel*1.0/(max_prog-1.0))) .EQ. 0)THEN
+            WRITE(*,'(A)',ADVANCE='NO')'*'
+            prog=prog+1
+          ENDIF
         ENDDO
       ELSE
         !get past element data, just counting tets right now
@@ -114,5 +121,9 @@ CONTAINS
       el_tag(i)=temp_array(i,5)
     ENDDO
     DEALLOCATE(temp_array)
+    DO i=prog,max_prog
+      WRITE(*,'(A)',ADVANCE='NO')'*'
+    ENDDO
+    WRITE(*,*)
   ENDSUBROUTINE read_elements
 END MODULE read_gmsh

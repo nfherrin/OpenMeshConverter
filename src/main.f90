@@ -42,7 +42,7 @@ PROGRAM openmeshconverter
         temp_string=TRIM(mesh_outfile)
     ENDSELECT
   ENDIF
-  mesh_outfile=TRIM(temp_string)//'.thrm'
+  mesh_outfile=TRIM(temp_string)//'_out.thrm'
 
   !get boundary conditions
   i=2

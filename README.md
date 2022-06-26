@@ -18,7 +18,7 @@ To run OpenMeshConverter, simply invoke the OpenMeshConverter binary and follow 
   >> <path_to_OpenMeshConverter>/OpenMeshConverter.exe <gmsh_file>
 ```
 The output file will be titled `<gmsh_file>_out.thrm`. This output will set all boundary conditions to vacuum.
-If the user desires to set boundary conditions to reflective or incoming flux boundary conditions, then boundary conditions can be specified on the command line when invoking the Mesh Converter by using the `-bc` indicator.
+If the user desires to set boundary conditions to reflective or incoming flux boundary conditions, then boundary conditions can be specified on the command line when invoking OpenMeshConverter by using the `-bc` indicator.
 If the `-bc` indicator is called, then the next six entries will be assumed to be the boundary conditions (integer values) on each of the six primary directions.
 The order for the boundary conditions specified in this manner are as follows:
 ```

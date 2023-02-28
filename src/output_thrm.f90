@@ -24,7 +24,7 @@ CONTAINS
     WRITE(30,'(I0)')1
     !print out vertices
     DO i=1,num_verts
-      WRITE(30,'(I0,3ES24.16)')i,vertex(i,:)
+      WRITE(30,'(I0,3ES24.16)')i,vertex(i)%x,vertex(i)%y,vertex(i)%z
     ENDDO
     !print out tet regions and source. Assume each region has its own source. User can change this later
     DO i=1,num_tets
@@ -60,7 +60,7 @@ CONTAINS
 
   SUBROUTINE calcvols()
     REAL(8) :: totalvol1
-    REAL(8) :: a(3),b(3),c(3),d(3)
+    TYPE(vertex_type) :: a,b,c,d
     REAL(8), ALLOCATABLE :: tetvol(:),regvol(:)
     INTEGER, ALLOCATABLE :: tets_in_reg(:)
     INTEGER :: i,minreg,maxreg
@@ -77,13 +77,13 @@ CONTAINS
     prog=0
     !compute tet volumes and add to both total volumes and region volumes
     DO i=1,num_tets
-      a(:)=vertex(element(i,1),:)
-      b(:)=vertex(element(i,2),:)
-      c(:)=vertex(element(i,3),:)
-      d(:)=vertex(element(i,4),:)
-      tetvol(i)=ABS((-c(2)*d(1)+b(2)*(-c(1)+d(1))+b(1)*(c(2)-d(2))+c(1)*d(2))*(a(3)-d(3))+(a(1)-d(1)) &
-        *(-c(3)*d(2)+b(3)*(-c(2)+d(2))+b(2)*(c(3)-d(3))+c(2)*d(3))+(a(2)-d(2))*(b(3)*(c(1)-d(1)) &
-        +c(3)*d(1)-c(1)*d(3)+b(1)*(-c(3)+d(3))))/6
+      a=vertex(element(i,1))
+      b=vertex(element(i,2))
+      c=vertex(element(i,3))
+      d=vertex(element(i,4))
+      tetvol(i)=ABS((-c%y*d%x+b%y*(-c%x+d%x)+b%x*(c%y-d%y)+c%x*d%y)*(a%z-d%z)+(a%x-d%x) &
+        *(-c%z*d%y+b%z*(-c%y+d%y)+b%y*(c%z-d%z)+c%y*d%z)+(a%y-d%y)*(b%z*(c%x-d%x) &
+        +c%z*d%x-c%x*d%z+b%x*(-c%z+d%z)))/6.0D0
       regvol(el_tag(i))=regvol(el_tag(i))+tetvol(i)
       tets_in_reg(el_tag(i))=tets_in_reg(el_tag(i))+1
       totalvol1=totalvol1+tetvol(i)

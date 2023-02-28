@@ -146,9 +146,9 @@ CONTAINS
       DO j=1,4
         IF(bc_data(i,2) .NE. j-1)THEN
           face_idx=face_idx+1
-          face_point(face_idx,:)=vertex(element(el_id,j),:)
+          face_point(face_idx,:)=(/vertex(element(el_id,j))%x,vertex(element(el_id,j))%y,vertex(element(el_id,j))%z/)
         ELSE
-          ext_point(:)=vertex(element(el_id,j),:)
+          ext_point=(/vertex(element(el_id,j))%x,vertex(element(el_id,j))%y,vertex(element(el_id,j))%z/)
         ENDIF
       ENDDO
       !get the outward going unit normal vector for the tet for this face

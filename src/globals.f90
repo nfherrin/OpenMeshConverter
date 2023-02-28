@@ -30,7 +30,7 @@ MODULE globals
   INTEGER, PARAMETER :: max_prog=70
 
   !vertex data
-  REAL(8), ALLOCATABLE :: vertex(:,:)
+  TYPE(vertex_type), TARGET, ALLOCATABLE :: vertex(:)
 
   !element data
   INTEGER, ALLOCATABLE :: element(:,:)

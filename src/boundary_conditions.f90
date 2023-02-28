@@ -15,7 +15,8 @@ MODULE boundary_conditions
 CONTAINS
 
   SUBROUTINE adjacency_calc()
-    INTEGER :: i,og_face(3),adj_idx
+    INTEGER :: i,og_face(3),adj_idx,j,ii,jj
+    LOGICAL :: adj_found=.FALSE.
 
     DO i=1,num_tets
       CALL orderverts(tet(i))
@@ -28,23 +29,47 @@ CONTAINS
     num_bcf=0
     prog=0
     WRITE(*,'(A)',ADVANCE='NO')'Progress:'
+    !loop over all tets
     DO i=1,num_tets
       IF(MOD(i,CEILING(num_tets*1.0/(max_prog-1.0))) .EQ. 0)THEN
         WRITE(*,'(A)',ADVANCE='NO')'*'
         prog=prog+1
       ENDIF
-      !first face
-      og_face=(/tet(i)%corner(2)%p%id,tet(i)%corner(3)%p%id,tet(i)%corner(4)%p%id/)
-      CALL find_adj(og_face,i,0,adj_idx)
-      !second face
-      og_face=(/tet(i)%corner(1)%p%id,tet(i)%corner(3)%p%id,tet(i)%corner(4)%p%id/)
-      CALL find_adj(og_face,i,1,adj_idx)
-      !third face
-      og_face=(/tet(i)%corner(1)%p%id,tet(i)%corner(2)%p%id,tet(i)%corner(4)%p%id/)
-      CALL find_adj(og_face,i,2,adj_idx)
-      !fourth face
-      og_face=(/tet(i)%corner(1)%p%id,tet(i)%corner(2)%p%id,tet(i)%corner(3)%p%id/)
-      CALL find_adj(og_face,i,3,adj_idx)
+      !loop over all faces
+      DO j=1,4
+        !we're not exiting the face yet (we do once we find the adjacency)
+        adj_found=.FALSE.
+        !make sure that the adjacency hasn't already been found
+        IF(tet(i)%adj_id(j) .EQ. 0)THEN
+          !loop over all other tets
+          DO ii=1,num_tets
+            !make sure they're not the same element
+            IF(ii .NE. i)THEN
+              !loop over all faces for the other tet
+              DO jj=1,4
+                !if the sides match, then assign the adjacencies
+                IF(check_face(tet(i),j,tet(ii),jj))THEN
+                  tet(i)%adj_id(j)=ii
+                  tet(ii)%adj_id(jj)=i
+                  tet(i)%adj_face(j)=jj
+                  tet(ii)%adj_face(jj)=j
+                  adj_found=.TRUE.
+                ENDIF
+                IF(adj_found)EXIT
+              ENDDO
+            ENDIF
+            IF(adj_found)EXIT
+          ENDDO
+          !if we never found an adjacency, then the face is a bc face
+          IF(.NOT. adj_found)THEN
+            num_bcf=num_bcf+1
+            tbound_cond(num_bcf,1)=i
+            tbound_cond(num_bcf,2)=j
+            !assign bc to 0 for now (this will change later)
+            tbound_cond(num_bcf,3)=0
+          ENDIF
+        ENDIF
+      ENDDO
     ENDDO
     ALLOCATE(bc_data(num_bcf,3),bc_side(num_bcf))
     bc_data=0
@@ -67,66 +92,32 @@ CONTAINS
     DEALLOCATE(tbound_cond,bc_side)
   ENDSUBROUTINE adjacency_calc
 
-  SUBROUTINE find_adj(face,el_idx,faceid,adj_idx)
-    INTEGER,INTENT(IN) :: face(3)
-    INTEGER,INTENT(IN) :: el_idx
-    INTEGER,INTENT(IN) :: faceid
-    INTEGER,INTENT(INOUT) :: adj_idx
-    INTEGER :: j,comp_face(3)
-    LOGICAL :: match
+  LOGICAL FUNCTION check_face(tet1,face1,tet2,face2)
+    TYPE(element_type_3d),INTENT(IN) :: tet1,tet2
+    INTEGER,INTENT(IN) :: face1,face2
+    INTEGER :: ids1(3)=0,ids2(3)=0,j=0,i=0
 
-    match=.FALSE.
-    DO j=1,num_tets
-      !compare for first face
-      comp_face=(/tet(j)%corner(2)%p%id,tet(j)%corner(3)%p%id,tet(j)%corner(4)%p%id/)
-      CALL check_face(face,comp_face,el_idx,j,faceid,0,adj_idx,match)
-      IF(match)EXIT
-      !compare for second face
-      comp_face=(/tet(j)%corner(1)%p%id,tet(j)%corner(3)%p%id,tet(j)%corner(4)%p%id/)
-      CALL check_face(face,comp_face,el_idx,j,faceid,1,adj_idx,match)
-      IF(match)EXIT
-      !compare for third face
-      comp_face=(/tet(j)%corner(1)%p%id,tet(j)%corner(2)%p%id,tet(j)%corner(4)%p%id/)
-      CALL check_face(face,comp_face,el_idx,j,faceid,2,adj_idx,match)
-      IF(match)EXIT
-      !compare for fourth face
-      comp_face=(/tet(j)%corner(1)%p%id,tet(j)%corner(2)%p%id,tet(j)%corner(3)%p%id/)
-      CALL check_face(face,comp_face,el_idx,j,faceid,3,adj_idx,match)
-      IF(match)EXIT
+    check_face=.FALSE.
+
+    !assign face ids for face1
+    i=0
+    DO j=1,4
+      IF(j .NE. face1)THEN
+        i=i+1
+        ids1(i)=tet1%corner(j)%p%id
+      ENDIF
     ENDDO
-    !if we go through the whole thing and don't exit
-    IF(j .EQ. num_tets+1)THEN
-      !we didn't find a matching face so it's a boundary condition
-      adj_idx=adj_idx+1
-      tet(el_idx)%adj_id(faceid+1)=0
-      tet(el_idx)%adj_face(faceid+1)=0
-      num_bcf=num_bcf+1
-      tbound_cond(num_bcf,1)=el_idx
-      tbound_cond(num_bcf,2)=faceid
-      !assign bc to 0 for now (this will change later
-      tbound_cond(num_bcf,3)=0
-    ENDIF
-  ENDSUBROUTINE find_adj
+    !assign face ids for face2
+    i=0
+    DO j=1,4
+      IF(j .NE. face2)THEN
+        i=i+1
+        ids2(i)=tet2%corner(j)%p%id
+      ENDIF
+    ENDDO
 
-  SUBROUTINE check_face(face1,face2,el_idx1,el_idx2,faceid1,faceid2,adj_idx,match)
-    INTEGER,INTENT(IN) :: face1(3)
-    INTEGER,INTENT(IN) :: face2(3)
-    INTEGER,INTENT(IN) :: el_idx1
-    INTEGER,INTENT(IN) :: el_idx2
-    INTEGER,INTENT(IN) :: faceid1
-    INTEGER,INTENT(IN) :: faceid2
-    INTEGER,INTENT(INOUT) :: adj_idx
-    LOGICAL,INTENT(INOUT) :: match
-    match=.FALSE.
-    !check to see if the faces match
-    IF(face1(1) .EQ. face2(1) .AND. face1(2) .EQ. face2(2) &
-        .AND. face1(3) .EQ. face2(3) .AND. el_idx1 .NE. el_idx2)THEN
-      adj_idx=adj_idx+1
-      tet(el_idx1)%adj_id(faceid1+1)=el_idx2
-      tet(el_idx1)%adj_face(faceid1+1)=faceid2+1
-      match=.TRUE.
-    ENDIF
-  ENDSUBROUTINE check_face
+    IF(ids1(1) .EQ. ids2(1) .AND. ids1(2) .EQ. ids2(2) .AND. ids1(3) .EQ. ids2(3))check_face=.TRUE.
+  ENDFUNCTION check_face
 
   SUBROUTINE det_side_flatness()
     INTEGER :: i,j,el_id,face_idx

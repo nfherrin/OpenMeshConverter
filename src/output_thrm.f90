@@ -38,7 +38,7 @@ CONTAINS
     !print out boundary conditions
     WRITE(30,'(I0)')num_bcf
     DO i=1,num_bcf
-      WRITE(30,'(I0,A,I0,A,I0)')bc_data(i,1),' ',bc_data(i,2),' ',bc_data(i,3)
+      WRITE(30,'(I0,A,I0,A,I0)')bc_data(i,1),' ',bc_data(i,2)-1,' ',bc_data(i,3)
     ENDDO
     !print out adjacency list
     WRITE(30,'(I0)')num_tets*4

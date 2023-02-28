@@ -18,11 +18,10 @@ CONTAINS
     INTEGER :: i,og_face(3),adj_idx
 
     DO i=1,num_tets
-      element(i,:)=orderedverts(element(i,:))
+      CALL orderverts(tet(i))
     ENDDO
 
-    ALLOCATE(adj_list(num_tets*4,4),tbound_cond(num_tets*4,3))
-    adj_list=0
+    ALLOCATE(tbound_cond(num_tets*4,3))
     tbound_cond=0
     !loop over all tets
     adj_idx=0
@@ -35,16 +34,16 @@ CONTAINS
         prog=prog+1
       ENDIF
       !first face
-      og_face=(/element(i,2),element(i,3),element(i,4)/)
+      og_face=(/tet(i)%corner(2)%p%id,tet(i)%corner(3)%p%id,tet(i)%corner(4)%p%id/)
       CALL find_adj(og_face,i,0,adj_idx)
       !second face
-      og_face=(/element(i,1),element(i,3),element(i,4)/)
+      og_face=(/tet(i)%corner(1)%p%id,tet(i)%corner(3)%p%id,tet(i)%corner(4)%p%id/)
       CALL find_adj(og_face,i,1,adj_idx)
       !third face
-      og_face=(/element(i,1),element(i,2),element(i,4)/)
+      og_face=(/tet(i)%corner(1)%p%id,tet(i)%corner(2)%p%id,tet(i)%corner(4)%p%id/)
       CALL find_adj(og_face,i,2,adj_idx)
       !fourth face
-      og_face=(/element(i,1),element(i,2),element(i,3)/)
+      og_face=(/tet(i)%corner(1)%p%id,tet(i)%corner(2)%p%id,tet(i)%corner(3)%p%id/)
       CALL find_adj(og_face,i,3,adj_idx)
     ENDDO
     ALLOCATE(bc_data(num_bcf,3),bc_side(num_bcf))
@@ -79,19 +78,19 @@ CONTAINS
     match=.FALSE.
     DO j=1,num_tets
       !compare for first face
-      comp_face=(/element(j,2),element(j,3),element(j,4)/)
+      comp_face=(/tet(j)%corner(2)%p%id,tet(j)%corner(3)%p%id,tet(j)%corner(4)%p%id/)
       CALL check_face(face,comp_face,el_idx,j,faceid,0,adj_idx,match)
       IF(match)EXIT
       !compare for second face
-      comp_face=(/element(j,1),element(j,3),element(j,4)/)
+      comp_face=(/tet(j)%corner(1)%p%id,tet(j)%corner(3)%p%id,tet(j)%corner(4)%p%id/)
       CALL check_face(face,comp_face,el_idx,j,faceid,1,adj_idx,match)
       IF(match)EXIT
       !compare for third face
-      comp_face=(/element(j,1),element(j,2),element(j,4)/)
+      comp_face=(/tet(j)%corner(1)%p%id,tet(j)%corner(2)%p%id,tet(j)%corner(4)%p%id/)
       CALL check_face(face,comp_face,el_idx,j,faceid,2,adj_idx,match)
       IF(match)EXIT
       !compare for fourth face
-      comp_face=(/element(j,1),element(j,2),element(j,3)/)
+      comp_face=(/tet(j)%corner(1)%p%id,tet(j)%corner(2)%p%id,tet(j)%corner(3)%p%id/)
       CALL check_face(face,comp_face,el_idx,j,faceid,3,adj_idx,match)
       IF(match)EXIT
     ENDDO
@@ -99,10 +98,8 @@ CONTAINS
     IF(j .EQ. num_tets+1)THEN
       !we didn't find a matching face so it's a boundary condition
       adj_idx=adj_idx+1
-      adj_list(adj_idx,1)=el_idx
-      adj_list(adj_idx,2)=faceid
-      adj_list(adj_idx,3)=0
-      adj_list(adj_idx,4)=0
+      tet(el_idx)%adj_id(faceid+1)=0
+      tet(el_idx)%adj_face(faceid+1)=0
       num_bcf=num_bcf+1
       tbound_cond(num_bcf,1)=el_idx
       tbound_cond(num_bcf,2)=faceid
@@ -125,10 +122,8 @@ CONTAINS
     IF(face1(1) .EQ. face2(1) .AND. face1(2) .EQ. face2(2) &
         .AND. face1(3) .EQ. face2(3) .AND. el_idx1 .NE. el_idx2)THEN
       adj_idx=adj_idx+1
-      adj_list(adj_idx,1)=el_idx1
-      adj_list(adj_idx,2)=faceid1
-      adj_list(adj_idx,3)=el_idx2
-      adj_list(adj_idx,4)=faceid2
+      tet(el_idx1)%adj_id(faceid1+1)=el_idx2
+      tet(el_idx1)%adj_face(faceid1+1)=faceid2+1
       match=.TRUE.
     ENDIF
   ENDSUBROUTINE check_face
@@ -144,11 +139,15 @@ CONTAINS
       face_idx=0
       !assign extruded and face boundary points
       DO j=1,4
-        IF(bc_data(i,2) .NE. j-1)THEN
-          face_idx=face_idx+1
-          face_point(face_idx,:)=(/vertex(element(el_id,j))%x,vertex(element(el_id,j))%y,vertex(element(el_id,j))%z/)
+        IF(bc_data(i,2) .EQ. j)THEN
+          !if it equals the face index the it's the extruded point
+          ext_point(:)=(/tet(el_id)%corner(j)%p%x,tet(el_id)%corner(j)%p%y,&
+              tet(el_id)%corner(j)%p%z/)
         ELSE
-          ext_point=(/vertex(element(el_id,j))%x,vertex(element(el_id,j))%y,vertex(element(el_id,j))%z/)
+          !if doesn't equal the face index the it's one of the face points
+          face_idx=face_idx+1
+          face_point(face_idx,:)=(/tet(el_id)%corner(j)%p%x, &
+              tet(el_id)%corner(j)%p%y,tet(el_id)%corner(j)%p%z/)
         ENDIF
       ENDDO
       !get the outward going unit normal vector for the tet for this face
@@ -212,23 +211,23 @@ CONTAINS
     cross(3) = a(1) * b(2) - a(2) * b(1)
   END FUNCTION cross
 
-  FUNCTION orderedverts(verts)
-    INTEGER :: orderedverts(4)
-    INTEGER, INTENT(IN) :: verts(4)
-    INTEGER :: i,temp_vert,changes
-    orderedverts=verts
-    !bubble sort algorithm, pretty cheap for only 4 elements
+  SUBROUTINE orderverts(this_tet)
+    TYPE(element_type_3d), INTENT(INOUT) :: this_tet
+    TYPE(vertex_type), POINTER :: temp_vert
+    INTEGER :: i,changes
+
+    !bubble sort algorithm, pretty cheap for only 4 points
     DO
       changes=0
       DO i=1,3
-        IF(orderedverts(i) .GE. orderedverts(i+1))THEN
-          temp_vert=orderedverts(i)
-          orderedverts(i)=orderedverts(i+1)
-          orderedverts(i+1)=temp_vert
+        IF(this_tet%corner(i)%p%id .GE. this_tet%corner(i+1)%p%id)THEN
+          temp_vert => vertex(this_tet%corner(i)%p%id)
+          this_tet%corner(i)%p => vertex(this_tet%corner(i+1)%p%id)
+          this_tet%corner(i+1)%p => vertex(temp_vert%id)
           changes=changes+1
         ENDIF
       ENDDO
       IF(changes .EQ. 0)EXIT
     ENDDO
-  ENDFUNCTION
+  ENDSUBROUTINE orderverts
 END MODULE boundary_conditions

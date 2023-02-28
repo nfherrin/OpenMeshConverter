@@ -33,13 +33,7 @@ MODULE globals
   TYPE(vertex_type), TARGET, ALLOCATABLE :: vertex(:)
 
   !element data
-  INTEGER, ALLOCATABLE :: element(:,:)
-
-  !element region tags
-  INTEGER, ALLOCATABLE :: el_tag(:)
-
-  !adjacency list
-  INTEGER, ALLOCATABLE :: adj_list(:,:)
+  TYPE(element_type_3d), ALLOCATABLE :: tet(:)
 
   !boundary conditions data
   INTEGER, ALLOCATABLE :: bc_data(:,:)

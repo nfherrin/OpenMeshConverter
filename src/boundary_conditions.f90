@@ -155,7 +155,7 @@ CONTAINS
       norm_vec=cross(face_point(2,:)-face_point(1,:), face_point(3,:)-face_point(1,:))
       offset=face_point(1,1)*norm_vec(1)+face_point(1,2)*norm_vec(2)+face_point(1,3)*norm_vec(3)
       lambda=(offset-norm_vec(1)*ext_point(1)-norm_vec(2)*ext_point(2)-norm_vec(3)*ext_point(3)) &
-        /(norm_vec(1)**2+norm_vec(2)**2+norm_vec(3)**2)
+          /(norm_vec(1)**2+norm_vec(2)**2+norm_vec(3)**2)
       norm_vec=norm_vec*lambda
       norm_vec=norm_vec/(SQRT(norm_vec(1)**2+norm_vec(2)**2+norm_vec(3)**2))
 

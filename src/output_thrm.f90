@@ -103,10 +103,8 @@ CONTAINS
     DO i=minreg,maxreg
       WRITE(*,'(A,I0,A,I0)')'Region ',i,' tets: ',tets_in_reg(i)
       WRITE(*,'(A,I0,A,ES24.16)')'Region ',i,' volume: ',regvol(i)
-      WRITE(*,'(A,I0,A,ES24.16)')'Region ',i,' equivalent radius: ',(3.0/4.0/pi*regvol(i))**(1.0/3.0)
     ENDDO
     WRITE(*,'(A,I0)')'Total number of tets: ',SUM(tets_in_reg)
     WRITE(*,'(A,ES24.16)')'Total system volume: ',totalvol1
-    WRITE(*,'(A,ES24.16)')'Equivalent radius: ',(3.0/4.0/pi*totalvol1)**(1.0/3.0)
   ENDSUBROUTINE calcvols
 END MODULE output_thrm

@@ -101,8 +101,10 @@ CONTAINS
     WRITE(*,*)
 
     DO i=minreg,maxreg
-      WRITE(*,'(A,I0,A,I0)')'Region ',i,' tets: ',tets_in_reg(i)
-      WRITE(*,'(A,I0,A,ES24.16)')'Region ',i,' volume: ',regvol(i)
+      IF(tets_in_reg(i) .GT. 0)THEN
+        WRITE(*,'(A,I0,A,I0)')'Region ',i,' tets: ',tets_in_reg(i)
+        WRITE(*,'(A,I0,A,ES24.16)')'Region ',i,' volume: ',regvol(i)
+      ENDIF
     ENDDO
     WRITE(*,'(A,I0)')'Total number of tets: ',SUM(tets_in_reg)
     WRITE(*,'(A,ES24.16)')'Total system volume: ',totalvol1

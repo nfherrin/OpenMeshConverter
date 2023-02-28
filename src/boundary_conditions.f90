@@ -9,22 +9,19 @@ MODULE boundary_conditions
     IMPLICIT NONE
     PRIVATE
     PUBLIC :: adjacency_calc
-
-    INTEGER, ALLOCATABLE :: tbound_cond(:,:)
-    INTEGER, ALLOCATABLE :: bc_side(:)
 CONTAINS
 
   SUBROUTINE adjacency_calc()
     INTEGER :: i,og_face(3),adj_idx,j,ii,jj
     LOGICAL :: adj_found=.FALSE.
+    INTEGER :: tbound_cond(num_tets*4,3)
 
     DO i=1,num_tets
       CALL orderverts(tet(i))
     ENDDO
 
-    ALLOCATE(tbound_cond(num_tets*4,3))
-    tbound_cond=0
     !loop over all tets
+    tbound_cond=0
     adj_idx=0
     num_bcf=0
     prog=0
@@ -54,8 +51,8 @@ CONTAINS
                   tet(i)%adj_face(j)=jj
                   tet(ii)%adj_face(jj)=j
                   adj_found=.TRUE.
+                  EXIT
                 ENDIF
-                IF(adj_found)EXIT
               ENDDO
             ENDIF
             IF(adj_found)EXIT
@@ -71,14 +68,12 @@ CONTAINS
         ENDIF
       ENDDO
     ENDDO
-    ALLOCATE(bc_data(num_bcf,3),bc_side(num_bcf))
+    ALLOCATE(bc_data(num_bcf,3))
     bc_data=0
-    bc_side=0
     DO i=1,num_bcf
       bc_data(i,:)=tbound_cond(i,:)
     ENDDO
 
-    bc_side=0
     !determine which sides are flat
     IF(MINVAL(side_bc) .EQ. MAXVAL(side_bc))THEN
       bc_data(:,3)=side_bc(1)
@@ -89,7 +84,6 @@ CONTAINS
       WRITE(*,'(A)',ADVANCE='NO')'*'
     ENDDO
     WRITE(*,*)
-    DEALLOCATE(tbound_cond,bc_side)
   ENDSUBROUTINE adjacency_calc
 
   LOGICAL FUNCTION check_face(tet1,face1,tet2,face2)
@@ -122,6 +116,8 @@ CONTAINS
   SUBROUTINE det_side_flatness()
     INTEGER :: i,j,el_id,face_idx
     REAL(8) :: face_point(3,3),ext_point(3),norm_vec(3),lambda,offset
+    INTEGER :: bc_side(num_bcf)
+    bc_side=0
 
     !sides are assumed to be flat, and if they are not this is set to false.
     side_flat=.TRUE.

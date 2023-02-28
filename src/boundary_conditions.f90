@@ -12,10 +12,11 @@ MODULE boundary_conditions
 
     INTEGER, ALLOCATABLE :: tbound_cond(:,:)
     INTEGER, ALLOCATABLE :: bc_side(:)
+    INTEGER :: adj_idx
 CONTAINS
 
   SUBROUTINE adjacency_calc()
-    INTEGER :: i,og_face(3),adj_idx
+    INTEGER :: i,og_face(3)
 
     DO i=1,num_tets
       element(i,:)=orderedverts(element(i,:))
@@ -35,17 +36,37 @@ CONTAINS
         prog=prog+1
       ENDIF
       !first face
-      og_face=(/element(i,2),element(i,3),element(i,4)/)
-      CALL find_adj(og_face,i,0,adj_idx)
+      adj_idx=adj_idx+1
+      adj_list(adj_idx,1)=i
+      adj_list(adj_idx,2)=0
+      IF(adj_list(adj_idx,3) .EQ. 0)THEN
+        og_face=(/element(i,2),element(i,3),element(i,4)/)
+        CALL find_adj(og_face,i,0)
+      ENDIF
       !second face
-      og_face=(/element(i,1),element(i,3),element(i,4)/)
-      CALL find_adj(og_face,i,1,adj_idx)
+      adj_idx=adj_idx+1
+      adj_list(adj_idx,1)=i
+      adj_list(adj_idx,2)=1
+      IF(adj_list(adj_idx,3) .EQ. 0)THEN
+        og_face=(/element(i,1),element(i,3),element(i,4)/)
+        CALL find_adj(og_face,i,1)
+      ENDIF
       !third face
-      og_face=(/element(i,1),element(i,2),element(i,4)/)
-      CALL find_adj(og_face,i,2,adj_idx)
+      adj_idx=adj_idx+1
+      adj_list(adj_idx,1)=i
+      adj_list(adj_idx,2)=2
+      IF(adj_list(adj_idx,3) .EQ. 0)THEN
+        og_face=(/element(i,1),element(i,2),element(i,4)/)
+        CALL find_adj(og_face,i,2)
+      ENDIF
       !fourth face
-      og_face=(/element(i,1),element(i,2),element(i,3)/)
-      CALL find_adj(og_face,i,3,adj_idx)
+      adj_idx=adj_idx+1
+      adj_list(adj_idx,1)=i
+      adj_list(adj_idx,2)=3
+      IF(adj_list(adj_idx,3) .EQ. 0)THEN
+        og_face=(/element(i,1),element(i,2),element(i,3)/)
+        CALL find_adj(og_face,i,3)
+      ENDIF
     ENDDO
     ALLOCATE(bc_data(num_bcf,3),bc_side(num_bcf))
     bc_data=0
@@ -68,11 +89,10 @@ CONTAINS
     DEALLOCATE(tbound_cond,bc_side)
   ENDSUBROUTINE adjacency_calc
 
-  SUBROUTINE find_adj(face,el_idx,faceid,adj_idx)
+  SUBROUTINE find_adj(face,el_idx,faceid)
     INTEGER,INTENT(IN) :: face(3)
     INTEGER,INTENT(IN) :: el_idx
     INTEGER,INTENT(IN) :: faceid
-    INTEGER,INTENT(INOUT) :: adj_idx
     INTEGER :: j,comp_face(3)
     LOGICAL :: match
 
@@ -80,55 +100,46 @@ CONTAINS
     DO j=1,num_tets
       !compare for first face
       comp_face=(/element(j,2),element(j,3),element(j,4)/)
-      CALL check_face(face,comp_face,el_idx,j,faceid,0,adj_idx,match)
+      CALL check_face(face,comp_face,el_idx,j,faceid,0,match)
       IF(match)EXIT
       !compare for second face
       comp_face=(/element(j,1),element(j,3),element(j,4)/)
-      CALL check_face(face,comp_face,el_idx,j,faceid,1,adj_idx,match)
+      CALL check_face(face,comp_face,el_idx,j,faceid,1,match)
       IF(match)EXIT
       !compare for third face
       comp_face=(/element(j,1),element(j,2),element(j,4)/)
-      CALL check_face(face,comp_face,el_idx,j,faceid,2,adj_idx,match)
+      CALL check_face(face,comp_face,el_idx,j,faceid,2,match)
       IF(match)EXIT
       !compare for fourth face
       comp_face=(/element(j,1),element(j,2),element(j,3)/)
-      CALL check_face(face,comp_face,el_idx,j,faceid,3,adj_idx,match)
+      CALL check_face(face,comp_face,el_idx,j,faceid,3,match)
       IF(match)EXIT
     ENDDO
     !if we go through the whole thing and don't exit
     IF(j .EQ. num_tets+1)THEN
       !we didn't find a matching face so it's a boundary condition
-      adj_idx=adj_idx+1
-      adj_list(adj_idx,1)=el_idx
-      adj_list(adj_idx,2)=faceid
-      adj_list(adj_idx,3)=0
-      adj_list(adj_idx,4)=0
       num_bcf=num_bcf+1
       tbound_cond(num_bcf,1)=el_idx
       tbound_cond(num_bcf,2)=faceid
-      !assign bc to 0 for now (this will change later
-      tbound_cond(num_bcf,3)=0
     ENDIF
   ENDSUBROUTINE find_adj
 
-  SUBROUTINE check_face(face1,face2,el_idx1,el_idx2,faceid1,faceid2,adj_idx,match)
+  SUBROUTINE check_face(face1,face2,el_idx1,el_idx2,faceid1,faceid2,match)
     INTEGER,INTENT(IN) :: face1(3)
     INTEGER,INTENT(IN) :: face2(3)
     INTEGER,INTENT(IN) :: el_idx1
     INTEGER,INTENT(IN) :: el_idx2
     INTEGER,INTENT(IN) :: faceid1
     INTEGER,INTENT(IN) :: faceid2
-    INTEGER,INTENT(INOUT) :: adj_idx
     LOGICAL,INTENT(INOUT) :: match
     match=.FALSE.
     !check to see if the faces match
     IF(face1(1) .EQ. face2(1) .AND. face1(2) .EQ. face2(2) &
         .AND. face1(3) .EQ. face2(3) .AND. el_idx1 .NE. el_idx2)THEN
-      adj_idx=adj_idx+1
-      adj_list(adj_idx,1)=el_idx1
-      adj_list(adj_idx,2)=faceid1
       adj_list(adj_idx,3)=el_idx2
       adj_list(adj_idx,4)=faceid2
+      adj_list((el_idx2-1)*4+faceid2+1,3)=el_idx1
+      adj_list((el_idx2-1)*4+faceid2+1,4)=faceid1
       match=.TRUE.
     ENDIF
   ENDSUBROUTINE check_face

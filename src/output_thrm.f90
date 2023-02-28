@@ -85,8 +85,8 @@ CONTAINS
       c=tet(i)%corner(3)%p
       d=tet(i)%corner(4)%p
       tetvol(i)=ABS((-c%y*d%x+b%y*(-c%x+d%x)+b%x*(c%y-d%y)+c%x*d%y)*(a%z-d%z)+(a%x-d%x) &
-        *(-c%z*d%y+b%z*(-c%y+d%y)+b%y*(c%z-d%z)+c%y*d%z)+(a%y-d%y)*(b%z*(c%x-d%x) &
-        +c%z*d%x-c%x*d%z+b%x*(-c%z+d%z)))/6.0D0
+          *(-c%z*d%y+b%z*(-c%y+d%y)+b%y*(c%z-d%z)+c%y*d%z)+(a%y-d%y)*(b%z*(c%x-d%x) &
+          +c%z*d%x-c%x*d%z+b%x*(-c%z+d%z)))/6.0D0
       regvol(tet(i)%reg)=regvol(tet(i)%reg)+tetvol(i)
       tets_in_reg(tet(i)%reg)=tets_in_reg(tet(i)%reg)+1
       totalvol1=totalvol1+tetvol(i)

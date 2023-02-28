@@ -33,7 +33,7 @@ CONTAINS
     !print out tet composition
     DO i=1,num_tets
       WRITE(30,'(I0,A,I0,A,I0,A,I0,A,I0)')i,' ',element(i,1),' ',element(i,2),' ',element(i,3),' ' &
-        ,element(i,4)
+          ,element(i,4)
     ENDDO
     !print out boundary conditions
     WRITE(30,'(I0)')num_bcf
@@ -82,8 +82,8 @@ CONTAINS
       c(:)=vertex(element(i,3),:)
       d(:)=vertex(element(i,4),:)
       tetvol(i)=ABS((-c(2)*d(1)+b(2)*(-c(1)+d(1))+b(1)*(c(2)-d(2))+c(1)*d(2))*(a(3)-d(3))+(a(1)-d(1)) &
-        *(-c(3)*d(2)+b(3)*(-c(2)+d(2))+b(2)*(c(3)-d(3))+c(2)*d(3))+(a(2)-d(2))*(b(3)*(c(1)-d(1)) &
-        +c(3)*d(1)-c(1)*d(3)+b(1)*(-c(3)+d(3))))/6
+          *(-c(3)*d(2)+b(3)*(-c(2)+d(2))+b(2)*(c(3)-d(3))+c(2)*d(3))+(a(2)-d(2))*(b(3)*(c(1)-d(1)) &
+          +c(3)*d(1)-c(1)*d(3)+b(1)*(-c(3)+d(3))))/6
       regvol(el_tag(i))=regvol(el_tag(i))+tetvol(i)
       tets_in_reg(el_tag(i))=tets_in_reg(el_tag(i))+1
       totalvol1=totalvol1+tetvol(i)
@@ -98,12 +98,12 @@ CONTAINS
     WRITE(*,*)
 
     DO i=minreg,maxreg
-      WRITE(*,'(A,I0,A,I0)')'Region ',i,' tets: ',tets_in_reg(i)
-      WRITE(*,'(A,I0,A,ES24.16)')'Region ',i,' volume: ',regvol(i)
-      WRITE(*,'(A,I0,A,ES24.16)')'Region ',i,' equivalent radius: ',(3.0/4.0/pi*regvol(i))**(1.0/3.0)
+      IF(tets_in_reg(i) .GT. 0)THEN
+        WRITE(*,'(A,I0,A,I0)')'Region ',i,' tets: ',tets_in_reg(i)
+        WRITE(*,'(A,I0,A,ES24.16)')'Region ',i,' volume: ',regvol(i)
+      ENDIF
     ENDDO
     WRITE(*,'(A,I0)')'Total number of tets: ',SUM(tets_in_reg)
     WRITE(*,'(A,ES24.16)')'Total system volume: ',totalvol1
-    WRITE(*,'(A,ES24.16)')'Equivalent radius: ',(3.0/4.0/pi*totalvol1)**(1.0/3.0)
   ENDSUBROUTINE calcvols
 END MODULE output_thrm

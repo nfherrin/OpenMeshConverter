@@ -5,6 +5,7 @@
 !> @author Nicholas F. Herring
 !-------------------------------------------------------------------------------
 MODULE globals
+  USE mesh_types
   IMPLICIT NONE
 
   !input mesh filename

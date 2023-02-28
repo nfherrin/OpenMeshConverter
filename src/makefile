@@ -23,10 +23,11 @@ coverage: OPT := -O0 -g --coverage
 #rule declaration. Add these items to FILTER
 #-----------------------------------------------------------------------------------
 SRC := \
-				main.f90 	      	\
-				globals.f90        					\
-				output_thrm.f90      					\
-				boundary_conditions.f90      					\
+				main.f90 \
+				globals.f90 \
+				output_thrm.f90 \
+				mesh_types.f90 \
+				boundary_conditions.f90 \
 				read_gmsh.f90
 
 OBJ := $(SRC:.f90=.o)
@@ -94,7 +95,8 @@ $(EXE): $(OBJ) $(CONT_OBJ) $(LIB_OBJ)
 #-----------------------------------------------------------------------------------
 boundary_conditions.o boundary_conditions.mod: boundary_conditions.f90 \
  globals.mod
-globals.o globals.mod: globals.f90
+globals.o globals.mod: globals.f90 mesh_types.mod
+mesh_types.o mesh_types.mod: mesh_types.f90
 main.o: main.f90 globals.mod read_gmsh.mod output_thrm.mod \
  boundary_conditions.mod
 output_thrm.o output_thrm.mod: output_thrm.f90 globals.mod

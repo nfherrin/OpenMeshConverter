@@ -28,7 +28,11 @@ CONTAINS
     ENDDO
     !print out tet regions and source. Assume each region has its own source. User can change this later
     DO i=1,num_tets
-      WRITE(30,'(I0,A,I0,A,I0)')i,' ',el_tag(i),' ',el_tag(i)
+      IF (el_phys_group(i) .EQ. 0) THEN
+        WRITE(30,'(I0,A,I0,A,I0,A,I0)')i,' ',el_tag(i),' ',el_tag(i)
+      ELSE
+        WRITE(30,'(I0,A,I0,A,I0)')i,' ',el_phys_group(i),' ',el_tag(i)
+      END IF
     ENDDO
     !print out tet composition
     DO i=1,num_tets
@@ -101,6 +105,7 @@ CONTAINS
       IF(tets_in_reg(i) .GT. 0)THEN
         WRITE(*,'(A,I0,A,I0)')'Region ',i,' tets: ',tets_in_reg(i)
         WRITE(*,'(A,I0,A,ES24.16)')'Region ',i,' volume: ',regvol(i)
+        WRITE(*,'(A,I0,A,I0)')'Region ',i,' physical group: ',phys_vol_tag(i)
       ENDIF
     ENDDO
     WRITE(*,'(A,I0)')'Total number of tets: ',SUM(tets_in_reg)

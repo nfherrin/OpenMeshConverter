@@ -37,6 +37,12 @@ MODULE globals
   !element region tags
   INTEGER, ALLOCATABLE :: el_tag(:)
 
+  !physical volumes
+  INTEGER, ALLOCATABLE :: phys_vol_tag(:)
+
+  !element physical volume tag
+  INTEGER, ALLOCATABLE :: el_phys_group(:)
+
   !adjacency list
   INTEGER, ALLOCATABLE :: adj_list(:,:)
 

@@ -26,6 +26,18 @@ CONTAINS
     temp_str=TRIM(ADJUSTL(temp_str))
     IF(temp_str(1:2) .NE. '4.')STOP 'gmesh format is wrong, should be 4 version'
 
+    !find the entities
+    REWIND(20)
+    DO
+      READ(20,*,iostat=ios)temp_str
+      IF(temp_str .EQ. '$Entities')THEN
+        !and read them
+        CALL read_entities()
+        EXIT
+      ENDIF
+      IF(ios .NE. 0)STOP 'did not find Entities in gmesh file'
+    ENDDO
+
     !find the nodes
     REWIND(20)
     DO
@@ -78,12 +90,12 @@ CONTAINS
 
   SUBROUTINE read_elements()
     INTEGER :: num_entities,numel,minel,maxel
-    INTEGER :: temp_int,loc_num_el,i,j,el_indx,el_dim,ent_tag
+    INTEGER :: temp_int,loc_num_el,i,j,el_indx,el_dim,ent_tag,ent_phys
     INTEGER, ALLOCATABLE :: temp_array(:,:)
     !get the elements info
     READ(20,*)num_entities,numel,minel,maxel
     !last value of array is tag (region/material)
-    ALLOCATE(temp_array(numel,5))
+    ALLOCATE(temp_array(numel,6))
     IF(minel .NE. 1 .OR. maxel .NE. numel)STOP 'elements should be indexed 1 to amount'
     !read in all node data
     num_tets=0
@@ -95,11 +107,13 @@ CONTAINS
       !actually counting the tets
       IF(el_dim .EQ. 3)THEN
         num_tets=num_tets+loc_num_el
+        ent_phys=phys_vol_tag(ent_tag)
         !get data since this is a tet set
         DO j=1,loc_num_el
           el_indx=el_indx+1
           READ(20,*)temp_int,temp_array(el_indx,1:4)
           temp_array(el_indx,5)=ent_tag
+          temp_array(el_indx,6)=ent_phys
           IF(MOD(el_indx,CEILING(numel*1.0/(max_prog-1.0))) .EQ. 0)THEN
             WRITE(*,'(A)',ADVANCE='NO')'*'
             prog=prog+1
@@ -113,12 +127,13 @@ CONTAINS
       ENDIF
     ENDDO
     !allocate elements and element tags
-    ALLOCATE(element(num_tets,4),el_tag(num_tets))
+    ALLOCATE(element(num_tets,4),el_tag(num_tets),el_phys_group(num_tets))
     element=0
     el_tag=0
     DO i=1,num_tets
       element(i,:)=temp_array(i,1:4)
       el_tag(i)=temp_array(i,5)
+      el_phys_group(i)=temp_array(i,6)
     ENDDO
     DEALLOCATE(temp_array)
     DO i=prog,max_prog
@@ -126,4 +141,29 @@ CONTAINS
     ENDDO
     WRITE(*,*)
   ENDSUBROUTINE read_elements
+
+  SUBROUTINE read_entities()
+    INTEGER :: num_points, num_curves, num_surfaces, num_volumes
+    INTEGER :: num_skiplines, i, j
+    REAL :: junk(8)
+
+    READ(20,*) num_points, num_curves, num_surfaces, num_volumes
+    num_skiplines = num_points + num_curves + num_surfaces
+    ! skip to volume entities
+    DO i=1,num_skiplines
+      READ(20,*)
+    END DO
+    ! read first physical group of each volume
+    ALLOCATE(phys_vol_tag(num_volumes))
+    phys_vol_tag = 0
+    DO i=1,num_volumes
+      READ(20,*) junk(1:7), j, phys_vol_tag(i)
+      IF (j==0) THEN 
+        phys_vol_tag(i) = 0
+        WRITE(*,'(A,I0,A)')'Region ',i,' has no physical groups associated.'
+      ELSE IF (j .NE. 1) THEN
+        WRITE(*,'(A,I0,A)')'Warning: Region ',i,' has more than one physical group associated!'
+      END IF
+    END DO
+  ENDSUBROUTINE
 END MODULE read_gmsh

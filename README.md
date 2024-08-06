@@ -33,6 +33,8 @@ It should be noted that if reflective boundary conditions are specified, then th
 If the user tries to assign reflective boundary conditions to a direction with a non-flat boundary, then the converter utility will throw an error and terminate.
 This check is ignored if all boundary conditions are reflective.
 
+If physical volumes are specified by the Gmsh input file, they will be used as the region indices for elements in the THOR mesh. Elements should not have more than one physical volume assigned to them, as only one physical volume will be read in by the mesh converter per element. Assignment of physical volumes *by material* is recommended in order to simplify region mapping in the THOR input file.
+
 ---
 ## Examples
 ---
